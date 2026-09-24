@@ -12,8 +12,8 @@ benchmark:
   * identical sorted Kodak image set
   * warmup passes per image and quality
   * CUDA-synchronized timing
-  * median over repetitions for each image
-  * dataset statistics over the per-image medians
+  * mean over repetitions for each image
+  * dataset statistics over the per-image means
   * dataset BPP calculated from total coded bits / total original pixels
   * file-size compression ratio calculated as:
         total original encoded-file bytes / total codec-bitstream bytes
@@ -529,8 +529,8 @@ def aggregate_dataset(image_results: List[dict]) -> dict:
         float("inf") if mean_mse == 0 else -10.0 * math.log10(mean_mse)
     )
 
-    def medians(field: str) -> List[float]:
-        return [result[field]["median"] for result in valid if result.get(field)]
+    def means(field: str) -> List[float]:
+        return [result[field]["mean"] for result in valid if result.get(field)]
 
     def optional_mean(field: str) -> Optional[float]:
         values = [result[field] for result in valid if result.get(field) is not None]
@@ -581,9 +581,9 @@ def aggregate_dataset(image_results: List[dict]) -> dict:
             if optional_mean("dists") is not None
             else None
         ),
-        "gpu_transform_ms": summarize(medians("gpu_transform_ms")),
-        "enc_ms": summarize(medians("enc_ms")),
-        "dec_ms": summarize(medians("dec_ms")),
+        "gpu_transform_ms": summarize(means("gpu_transform_ms")),
+        "enc_ms": summarize(means("enc_ms")),
+        "dec_ms": summarize(means("dec_ms")),
         "encode_peak_gpu_mem_MB": round(max(encode_peaks), 1) if encode_peaks else None,
         "decode_peak_gpu_mem_MB": round(max(decode_peaks), 1) if decode_peaks else None,
     }
@@ -671,8 +671,8 @@ def benchmark_codec_quality(
             f"fileCR={result['file_compression_ratio']:.2f}x "
             f"rawCR={result['raw_rgb_compression_ratio']:.2f}x "
             f"PSNR={result['psnr_dB']:.2f}dB "
-            f"enc={result['enc_ms']['median']:.2f}ms "
-            f"dec={result['dec_ms']['median']:.2f}ms"
+            f"enc={result['enc_ms']['mean']:.2f}ms "
+            f"dec={result['dec_ms']['mean']:.2f}ms"
         )
 
     summary = aggregate_dataset(image_results)
@@ -683,8 +683,8 @@ def benchmark_codec_quality(
         f"fileCR={summary['compression_ratio']:.3f}x "
         f"rawCR={summary['raw_rgb_compression_ratio']:.3f}x "
         f"PSNR={summary['psnr_dB']:.3f}dB "
-        f"enc={summary['enc_ms']['median']:.3f}ms "
-        f"dec={summary['dec_ms']['median']:.3f}ms ----"
+        f"enc={summary['enc_ms']['mean']:.3f}ms "
+        f"dec={summary['dec_ms']['mean']:.3f}ms ----"
     )
 
     del net
